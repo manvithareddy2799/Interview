@@ -1,0 +1,32 @@
+Linux Admin
+1.LvM
+2.How to Copy and how to take backups
+3.ping server is not reachable(what is the next step)
+4.How to search using port number
+nc
+traceroute
+5.schedule job at 5 am and it has to delete the log files that are 10 days old
+
+Kuberenetes
+Kubectl commmands
+1.Image pull back off error
+2.Pod pending state
+3.node not ready(all the nodes in the cluster are not ready)
+4.service not reachable, how to troubleshoot
+5.What is Service and types of services
+6.what is pv and pvc?what happens if pod is deleted to pvc-perisitenceVolumeReclaimPolicy and command to check pv and pvc?
+7.progressdeadline error-we can increase the replicas pods
+we can use autoscaling Hpa(to increase pods) and vpa(to cpu and memory for existing pods)
+8.Kubernetes architecture
+9.you are using external ip not reachable? ans-network policies????not sure
+10.How to increase cpu and memory to pod ?command
+11.we have pod in one namepspace wnat to  communicate with other other namespace?-namespace selector network policies
+
+Docker
+1.what is docker file?and what are the main instructions or components in docker file?from that docker file how to create image and container
+2.how to delete the container that was stopped?
+first check docker ps -a-status of container
+docker images
+docker rmi container <containerid>
+
+
