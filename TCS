@@ -20,7 +20,9 @@ we can use autoscaling Hpa(to increase pods) and vpa(to cpu and memory for exist
 8.Kubernetes architecture
 9.you are using external ip not reachable? ans-network policies????not sure
 10.How to increase cpu and memory to pod ?command
-11.we have pod in one namepspace wnat to  communicate with other other namespace?-namespace selector network policies
+11.we have pod in one namepspace wnat to  communicate with other other namespace?-namespace selector network policies,Rbac
+12.In your project how you are using RBAC
+
 
 Docker
 1.what is docker file?and what are the main instructions or components in docker file?from that docker file how to create image and container
