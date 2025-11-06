@@ -1,11 +1,18 @@
 Linux Admin
 1.LvM
-2.How to Copy and how to take backups
+*** How to Copy and how to take backups ***
+
 3.ping server is not reachable(what is the next step)
 4.How to search using port number
 nc
 traceroute
-5.schedule job at 5 am and it has to delete the log files that are 10 days old
+*** schedule job at 5 am and it has to delete the log files that are 10 days old ***
+0 5 * * * find /var/log -type f -mtime +10 -name "*.log" -exec rm -f {} \;
+📘 Explanation:
+0 5 * * * → Run daily at 05:00 AM
+find → searches in /var/log
+-mtime +10 → files older than 10 days
+-exec rm -f {} → delete each found file
 
 Kuberenetes
 Kubectl commmands
