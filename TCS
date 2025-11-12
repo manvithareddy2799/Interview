@@ -15,8 +15,43 @@ find → searches in /var/log
 -exec rm -f {} → delete each found file
 
 Kuberenetes
-Kubectl commmands
-1.Image pull back off error
+*** Kubectl commmands ***
+*** Image pull back off error ***
+1️⃣ ImagePullBackOff Error
+Meaning:
+It means Kubernetes tried to pull (download) the container image from the image registry (like Docker Hub, Quay, or a private repo) but failed repeatedly.
+Common Causes:
+*Incorrect image name or tag
+Example: nginx:alpinee (wrong spelling)
+*Private image repository (authentication needed)
+Missing imagePullSecret
+*Network issue
+Cluster node cannot connect to Docker registry.
+*DNS issue
+Node cannot resolve the registry hostname.
+
+How to check:
+kubectl describe pod <pod-name>
+
+Look at the Events section; you’ll see messages like:
+Failed to pull image "nginx:latest": rpc error: code = Unknown desc = Error response from daemon
+
+
+Fix:
+✅ Check the image name and tag
+✅ If private registry → create secret:
+kubectl create secret docker-registry myregistrykey \
+  --docker-server=<registry-url> \
+  --docker-username=<username> \
+  --docker-password=<password> \
+  --docker-email=<email>
+Then in Pod YAML:
+imagePullSecrets:
+  - name: myregistrykey
+✅ Check node network/DNS using:
+kubectl get nodes -o wide
+kubectl exec -it <pod> -- nslookup <registry-url>
+
 2.Pod pending state
 3.node not ready(all the nodes in the cluster are not ready)
 4.service not reachable, how to troubleshoot
