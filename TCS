@@ -245,12 +245,199 @@ curl <NodeIP>:<NodePort>
 If blocked → firewall or security group issue.
 
 5.What is Service and types of services
-6.what is pv and pvc?what happens if pod is deleted to pvc-perisitenceVolumeReclaimPolicy and command to check pv and pvc?
-7.progressdeadline error-we can increase the replicas pods
+*** what is pv and pvc?what happens if pod is deleted to pvc-perisitenceVolumeReclaimPolicy and command to check pv and pvc? ***
+| Object  | Meaning             |
+| ------- | ------------------- |
+| **PV**  | The actual storage  |
+| **PVC** | Request for storage |
+
+🔁 What happens if a Pod is deleted?
+The Pod is deleted, but the PVC and PV remain.
+So when a new pod comes back using the same PVC → it can still access the same data.
+
+🗑 What happens when PVC is deleted?
+This depends on the Reclaim Policy of the PV.
+
+📌 PersistenceVolumeReclaimPolicy Types
+| Policy            | Meaning        | What happens when PVC is deleted         |
+| ----------------- | -------------- | ---------------------------------------- |
+| **Retain**        | Keep data safe | PV keeps data; admin must clean manually |
+| **Delete**        | Delete storage | PV and actual storage are deleted        |
+| **Recycle (old)** | Wipes data     | Not used in modern Kubernetes            |
+
+🧠 Simple Example:
+If policy = Retain
+Pod deleted → data still there
+✔ When PVC is deleted
+The PVC (request) is gone.
+But the PV and data are NOT deleted.
+Kubernetes marks the PV as:
+Released
+
+This means:
+“The data still exists, but Kubernetes won’t reuse it automatically until an admin cleans or resets it.”
+
+If policy = Delete
+PVC deleted → PV + data removed forever
+
+🧪 Commands to Check PV and PVC
+Check all PVs:
+kubectl get pv
+
+Check details of a specific PV:
+kubectl describe pv <pv-name>
+
+Check all PVCs:
+kubectl get pvc
+
+Check details of a specific PVC:
+kubectl describe pvc <pvc-name>
+👉 This is how data remains safe even if the pod restarts or crashes.
+
+
+*** progressdeadline error-we can increase the replicas pods ***
 we can use autoscaling Hpa(to increase pods) and vpa(to cpu and memory for existing pods)
-8.Kubernetes architecture
-9.you are using external ip not reachable? ans-network policies????not sure
-10.How to increase cpu and memory to pod ?command
+
+🚨 What is a ProgressDeadlineExceeded error?
+This error happens when a Deployment takes too long to become Ready.
+Kubernetes waits for a certain time (default 10 minutes).
+If pods are not running and healthy within that time, Kubernetes shows:
+ProgressDeadlineExceeded
+
+🔍 Why does it happen?
+Common reasons:
+New pods failing to start
+Image pull error
+Readiness/Liveness probe failing
+Not enough CPU/Memory
+Too few replicas for load
+
+🛠 How to Fix It (Simple)
+✅ 1️⃣ Increase Replica Count
+If the application needs more pods to handle traffic:
+kubectl scale deploy <deployment-name> --replicas=5
+This adds more pods manually.
+
+✅ 2️⃣ Use HPA (Horizontal Pod Autoscaler)
+This automatically increases or decreases pod count based on CPU, memory, or custom metrics.
+Example:
+kubectl autoscale deployment <deployment-name> --cpu-percent=50 --min=2 --max=10
+Meaning:
+If CPU goes above 50%, Kubernetes will automatically create more pods (up to 10).
+✅ 3️⃣ Use VPA (Vertical Pod Autoscaler)
+
+This adjusts CPU and memory of existing pods, instead of creating more pods.
+Useful when pods are crashing due to insufficient resources.
+Example install-based command:
+VPA will recommend or auto adjust resources.
+(Not a single CLI command — requires CRDs enabled.)
+
+
+*** Kubernetes architecture ***
+🧠 1️⃣ Control Plane (Master components)-decides where your application should run and monitors the health of the application
+These components manage and control the cluster.
+| Component              | Simple Meaning                                             |
+| ---------------------- | ---------------------------------------------------------- |
+| **API Server**         | Entry point for all Kubernetes commands (kubectl talks to this)         |
+| **etcd**               | Database that stores all cluster data (state).             |
+| **Scheduler**          | Decides which node should run a pod.                       |
+| **Controller Manager** | Ensures desired state (e.g., keeps replica count correct). |
+
+🖥️ 2️⃣ Worker Nodes
+These nodes run the actual applications (pods).
+| Component                                 | Simple Meaning                                |
+| ----------------------------------------- | --------------------------------------------- |
+| **Kubelet**                               | Agent on each node that manages pods.         |
+| **Container Runtime (Docker/containerd)** | Runs containers.                              |
+| **Kube-Proxy**                            | Manages networking and service communication. ,and rouete trafice to the right pods|
+
+📦 Pods
+Smallest running unit in Kubernetes.
+Runs one or more containers.
+
+🏗 Deployment
+Defines how many pods should run.
+Kubernetes ensures they remain running.
+
+🌐 Service
+Provides a stable network endpoint to access pods.
+
+kubectl apply -f deployment.yaml
+API Server receives request.
+Scheduler decides the best worker node.
+Kubelet on that node creates the pod.
+Container Runtime starts the container.
+Kube-Proxy helps networking so pod can communicate.
+
+
+
+*** you are using external ip not reachable? ans-network policies????not sure ***
+External IP is not reachable because the traffic is blocked somewhere — check service type, endpoints, network policy, and firewall rules.
+🛠 Quick Troubleshooting Steps
+
+1️⃣ Check service type
+kubectl get svc
+If type is ClusterIP, external access won’t work.
+
+2️⃣ Check endpoints
+kubectl get endpoints <service-name>
+If empty → fix labels.
+
+3️⃣ Check network policies
+kubectl get networkpolicy
+If policies exist, they may block inbound traffic.
+
+4️⃣ Check Node/Cloud Firewall
+Open port if using NodePort (range: 30000–32767).
+
+***How to increase cpu and memory to pod ?command ***
+🔧 How to Increase CPU and Memory for a Pod?
+You cannot change resources directly on a running Pod.
+Instead, you update the Deployment, StatefulSet, or ReplicaSet that manages the Pod.
+Kubernetes will then restart the Pod with new resources.
+📍 Example YAML Before:
+resources:
+  requests:
+    cpu: "100m"
+    memory: "256Mi"
+  limits:
+    cpu: "200m"
+    memory: "512Mi"
+
+📍 After Increasing:
+resources:
+  requests:
+    cpu: "500m"
+    memory: "512Mi"
+  limits:
+    cpu: "1"
+    memory: "1Gi"
+
+🛠 Apply Change:
+If this is part of a Deployment file:
+kubectl apply -f deployment.yaml
+Kubernetes will recreate pods with the updated values.
+
+🚀 Quick Method (No YAML)
+You can edit the deployment directly:
+kubectl edit deployment <deployment-name>
+Then modify:
+resources:
+  requests:
+    cpu: "500m"
+    memory: "512Mi"
+  limits:
+    cpu: "1"
+    memory: "1Gi"
+Save → Pods restart with new CPU/Memory.
+
+⚙️ Using Autoscaling
+🔹 HPA (Horizontal Pod Autoscaler) → Increase Number of Pods
+kubectl autoscale deployment <deployment-name> --cpu-percent=50 --min=2 --max=5
+🔹 VPA (Vertical Pod Autoscaler) → Automatically adjust CPU/Memory
+(If installed)
+kubectl apply -f vpa.yaml
+
 11.we have pod in one namepspace wnat to  communicate with other other namespace?-namespace selector network policies,Rbac
 12.In your project how you are using RBAC
 
