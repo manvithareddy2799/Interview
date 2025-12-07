@@ -52,8 +52,114 @@ imagePullSecrets:
 kubectl get nodes -o wide
 kubectl exec -it <pod> -- nslookup <registry-url>
 
-2.Pod pending state
-3.node not ready(all the nodes in the cluster are not ready)
+****Pod pending state****
+A Pod in Pending state means Kubernetes accepted the request but hasn’t been able to schedule the Pod onto any node.
+It is basically stuck before running.
+✅ Why a Pod goes into Pending State?
+Here are the most common reasons with simple explanation:
+| Reason                                                             | Meaning                                          | Example                                                          |
+| ------------------------------------------------------------------ | ------------------------------------------------ | ---------------------------------------------------------------- |
+| **Not enough CPU/Memory resources**                                | No node has free capacity to run the pod         | You requested `2 CPU and 4Gi memory`, but all nodes are full     |
+| **No node matches nodeSelector/taints/tolerations/affinity rules** | Scheduling rules block the pod from being placed | Pod demands a node with label `env=prod` but no such node exists |
+| **PVC (Persistent Volume Claim) not bound**                        | Storage request not available yet                | Your PVC is Pending → Pod also Pending                           |
+| **ImagePullSecret missing for private registry**                   | Kubernetes can’t access private image            | Works only after you configure a secret                          |
+| **Network policy / permissions issue**                             | Scheduler can't assign pod due to constraints    | Rare but possible                                                |
+
+🧪 How to Troubleshoot Step-by-Step
+1️⃣ Check Pod Status and Events
+kubectl describe pod <pod-name>
+Look at the bottom: Events section — it tells the real reason.
+
+2️⃣ Check if Resources are Available
+kubectl get nodes -o wide
+kubectl describe node <node-name>
+If you see messages like:
+0/3 nodes are available: insufficient memory / cpu
+Then your requests are too high.
+3️⃣ Check PVC Binding Issue
+kubectl get pvc
+If PVC is also Pending, fix storage before the pod runs.
+4️⃣ Check Scheduling Rules
+If you're using labels or taints:
+kubectl get nodes --show-labels
+kubectl describe node <node>
+⭐ Common scheduler mismatch messages:
+node(s) didn't match node selector
+node(s) had taints that the pod didn't tolerate
+🛠 Example Real-Life Issue
+YAML:
+resources:
+  requests:
+    cpu: "2"
+    memory: "4Gi"
+If your node has only 1 CPU free, scheduler won't assign it, so pod stays pending.
+
+🩹 Fix: lower the request:
+resources:
+  requests:
+    cpu: "0.5"
+    memory: "512Mi"
+Adjust the reource requests and limits in the deployment
+kubectl edit deployment <deployment-name>
+
+
+***node not ready(all the nodes in the cluster are not ready)***
+It means Kubernetes cannot talk to the node, so pods cannot run on it.
+📌 How to Check Node Status
+kubectl get nodes
+Example output:
+NAME       STATUS     ROLES    AGE     VERSION
+node01     NotReady   worker   20d     v1.28
+node02     NotReady   worker   20d     v1.28
+
+🛠 How to Fix It (Simple Steps)
+1️⃣ Check kubelet is running
+Describe the Node
+kubectl describe node <node-name>
+Look for messages under Conditions:
+Ready: False
+Reason: KubeletNotReady
+Message: container runtime is down
+
+2️⃣ SSH into the node and check Kubelet
+systemctl status kubelet
+If not running, start it:
+sudo systemctl start kubelet
+sudo systemctl enable kubelet
+
+3️⃣ Check Node Pressure (Memory, Disk)
+Node Pressure means the node is running low on memory or disk space, so Kubernetes marks it as NotReady to protect itself.
+
+Types of Pressure:
+| Pressure Type      | Meaning                             | Example                              |
+| ------------------ | ----------------------------------- | ------------------------------------ |
+| **MemoryPressure** | Node is running out of RAM          | Too many pods using memory           |
+| **DiskPressure**   | Node is running out of disk storage | Logs, images, or files fill the disk |
+
+🧪 How to Check?
+Run:
+kubectl describe node <node-name>
+If you see:
+MemoryPressure: True
+DiskPressure: True
+
+🛠 How to Fix Node Pressure (Simple Steps)
+✅ If Memory is Low
+The node doesn't have enough RAM.
+Fix: Remove extra pods or increase the size of the node.
+
+✅ If Disk is Full
+The node doesn't have enough storage.
+Fix: Delete old files, logs, and unused container images.
+
+🧹 Simple Cleanup Commands
+If using Docker:
+docker system prune -a
+If using containerd:
+crictl rmi --prune
+
+
+
 4.service not reachable, how to troubleshoot
 5.What is Service and types of services
 6.what is pv and pvc?what happens if pod is deleted to pvc-perisitenceVolumeReclaimPolicy and command to check pv and pvc?
