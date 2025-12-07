@@ -672,6 +672,34 @@ Update secrets
 Manage ConfigMaps
 but cannot delete namespaces or cluster-level resources.
 
+*** Difference between deployment and statefulset ***
+
+deployment:
+Purpose: Manage stateless applications where pods are interchangeable.
+Key Points:
+Pods are stateless: any pod can be replaced without affecting the app.
+Pod names are randomly generated and has shared storage.
+Supports rolling updates and rollbacks easily.
+Usually used for web servers, APIs, stateless microservices.
+Each pod is identical, no persistent identity.
+
+2️⃣ StatefulSet
+Purpose: Manage stateful applications where each pod has a persistent identity.
+Key Points:
+Pods are stateful: each pod has a stable network identity and persistent storage.
+Pod names are stable and ordered (e.g., app-0, app-1, app-2).
+Used for databases, queues, and other stateful apps.
+Supports scaling in order and rolling updates carefully.
+Each pod can have its own PersistentVolumeClaim.
+
+3️⃣ DaemonSet
+Used for: Ensure one pod runs on every node (or a subset of nodes)
+Pods: 1 per node, automatically scheduled on new nodes
+Storage: Usually not needed per node (depends on the app)
+Use case:
+Logging agents (Fluentd, Logstash)
+Monitoring agents (Prometheus Node Exporter, Datadog)
+
 
 Docker
 1.what is docker file?and what are the main instructions or components in docker file?from that docker file how to create image and container
