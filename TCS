@@ -160,7 +160,90 @@ crictl rmi --prune
 
 
 
-4.service not reachable, how to troubleshoot
+*** service not reachable, how to troubleshoot ***
+🚨 When a Service is Not Reachable
+It means traffic is not passing from:
+Client → Service → Pod
+
+🧪 Step-by-Step Troubleshooting (Simple)
+1️⃣ Check if Service Exists
+kubectl get svc
+Make sure service name and namespace are correct.
+
+2️⃣ Check Service Type
+kubectl describe svc <service-name>
+Types:
+| Type         | When used                                         |
+| ------------ | ------------------------------------------------- |
+| ClusterIP    | Inside cluster only                               |
+| NodePort     | Accessible from outside using `<NodeIP>:NodePort` |
+| LoadBalancer | Cloud access (AWS/Azure/GCP)                      |
+If you're trying to access a ClusterIP from outside the cluster, it won't work.
+
+3️⃣ Check if Service Has Endpoints
+For a Service to send traffic to a Pod, the labels on the Pod must match the selector in the Service. If they don’t match, the Service has no endpoints, and traffic won’t reach the Pod.
+What are "Endpoints"?
+Endpoints are the IP addresses of pods that a service will send traffic to.
+If a service has no endpoints, it means:
+The service does not know which pod it should talk to.
+
+💡 Why does this happen?
+Because Kubernetes finds pods based on labels.
+A Service has a selector, and it looks for pods with matching labels.
+
+🧠 Example to Understand
+✅ Service YAML:
+selector:
+  app: web
+This means:
+"Send traffic only to pods that have the label app=web".
+
+❌ Pod Labels (incorrect)
+labels:
+  app: backend
+
+Since app=backend ≠ app=web, the service will find zero pods.
+So endpoints will be:
+<none>
+✔ Pod Labels (correct)
+labels:
+  app: web
+
+Now labels match → service will find the pod → endpoints will be created.
+🛠 How to Check
+1️⃣ Check service selector:
+kubectl describe svc <service-name>
+You will see something like:
+Selector: app=web
+
+2️⃣ Check pod labels:
+kubectl get pods --show-labels
+Example output:
+pod1   Running   app=backend
+pod2   Running   app=web
+Only the pod with app=web will become an endpoint.
+
+5️⃣ Check Pod is Running and Ready
+kubectl get pods
+If pod is:
+CrashLoopBackOff
+Error
+Pending
+→ Service cannot route traffic.
+
+6️⃣ Test Inside Cluster
+Use busybox or curl pod:
+kubectl run test --image=busybox:1.28 -it -- /bin/sh
+
+Then test:
+curl http://<service-name>:<port>
+If this works but external access fails → issue is NodePort / LoadBalancer.
+
+7️⃣ Check Firewall / NodePort Access
+If using NodePort:
+curl <NodeIP>:<NodePort>
+If blocked → firewall or security group issue.
+
 5.What is Service and types of services
 6.what is pv and pvc?what happens if pod is deleted to pvc-perisitenceVolumeReclaimPolicy and command to check pv and pvc?
 7.progressdeadline error-we can increase the replicas pods
