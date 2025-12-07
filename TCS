@@ -2,10 +2,58 @@ Linux Admin
 1.LvM
 *** How to Copy and how to take backups ***
 
-3.ping server is not reachable(what is the next step)
-4.How to search using port number
+*** ping server is not reachable(what is the next step)***
+✅ If ping is not reachable, next steps:
+Check if the server is up
+ssh <server-ip>
+
+Check DNS issue
+Try pinging IP instead of hostname:
+ping <IP>
+If IP works but hostname doesn't → DNS problem.
+
+Check if the network route exists-Want to check network path / routing issue
+traceroute <IP>
+This shows where the connection is breaking.
+
+Check firewall / security rules
+Linux firewall:
+sudo ufw status
+
+Check if required port is reachable
+telnet <IP> <port>
+or
+nc -zv <IP> <port>
+Ping only checks ICMP, not application access.
+Example: ping may fail but 443 could be open.
+If SSH also fails → server may be down or firewall blocking.
+
+
+*** How to search using port number ***
+1.Check open ports and listening services
+sudo netstat -tulpn | grep <port-number>
+Example:
+sudo netstat -tulpn | grep 443
+
+2.sing ss (modern replacement for netstat)
+sudo ss -tulpn | grep <port-number>
+Example:
+sudo ss -tulpn | grep 22
+
 nc
-traceroute
+✅ 1️⃣ Using nc (netcat)
+We use nc to check if a specific port is open or reachable on a server.
+Test if a remote server port is open
+nc -zv <server-ip> <port>
+Example:
+nc -zv 10.10.1.20 3306
+or:
+telnet <server-ip> <port>
+Example:
+telnet google.com 443
+
+
+
 *** schedule job at 5 am and it has to delete the log files that are 10 days old ***
 0 5 * * * find /var/log -type f -mtime +10 -name "*.log" -exec rm -f {} \;
 📘 Explanation:
