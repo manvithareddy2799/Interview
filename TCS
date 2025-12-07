@@ -438,8 +438,108 @@ kubectl autoscale deployment <deployment-name> --cpu-percent=50 --min=2 --max=5
 (If installed)
 kubectl apply -f vpa.yaml
 
-11.we have pod in one namepspace wnat to  communicate with other other namespace?-namespace selector network policies,Rbac
-12.In your project how you are using RBAC
+*** we have pod in one namepspace wnat to  communicate with other other namespace?-namespace selector network policies,Rbac ***
+❓ Can a Pod in one namespace communicate with a pod in another namespace?
+👉 Yes, by default Kubernetes allows cross-namespace communication.
+You can access another pod using:
+<service-name>.<namespace>.svc.cluster.local
+Example:
+curl http://app-service.dev.svc.cluster.local
+But sometimes communication may not work because of:
+🚫 1️⃣ Network Policies
+NetworkPolicies can block traffic between namespaces.
+To allow communication, you can use a namespaceSelector.
+Example Network Policy Allowing Traffic From Another Namespace 👇
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-from-dev
+  namespace: prod
+spec:
+  podSelector: {} 
+  ingress:
+  - from:
+    - namespaceSelector:
+        matchLabels:
+          allowed: "true"
+
+Then label the allowed namespace:
+kubectl label namespace dev allowed=true
+🚫 2️⃣ RBAC Permissions
+Even if network allows communication, some operations (like list pods, exec, logs) may require RBAC access.
+Example RoleBinding to allow a service account from namespace dev to access resources in prod:
+
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: allow-dev-access
+  namespace: prod
+subjects:
+- kind: ServiceAccount
+  name: app-sa
+  namespace: dev
+roleRef:
+  kind: Role
+  name: view
+  apiGroup: rbac.authorization.k8s.io
+
+
+*** In your project how you are using RBAC ***
+Example:
+| Role                      | What They Can Do                                                    |
+| ------------------------- | ------------------------------------------------------------------- |
+| **Admin**                 | Full control of the cluster                                         |
+| **Developer**             | Can view pods, logs, and update deployments only in their namespace |
+| **Tester/QA**             | Read-only access (cannot edit or delete anything)                   |
+| **CI/CD Service Account** | Can deploy applications but cannot delete cluster resources         |
+
+💬 How I use RBAC in my project
+In my project, RBAC (Role-Based Access Control) is used to control who can do what inside the Kubernetes cluster.
+We don’t give full admin access to everyone — instead, we give permissions based on roles.
+
+🧠 Why we use RBAC?
+To avoid accidental deletion of resources
+To enforce least privilege principle
+To make the cluster secure
+
+🛠 How we configure RBAC
+We create:
+Role or ClusterRole → defines permissions
+RoleBinding or ClusterRoleBinding → assigns the role to a user, group, or service account
+
+📌 Example we use in our environment:
+Role: Allow developers to manage deployments only
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: dev-role
+  namespace: dev
+rules:
+- apiGroups: ["apps"]
+  resources: ["deployments"]
+  verbs: ["get", "list", "watch", "create", "update"]
+
+RoleBinding: Assign role to developer team
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: dev-binding
+  namespace: dev
+subjects:
+- kind: User
+  name: developer1
+roleRef:
+  kind: Role
+  name: dev-role
+  apiGroup: rbac.authorization.k8s.io
+
+🔐 Service Account Usage
+Our CI/CD pipeline runs with a Service Account that has limited permissions.
+It can:
+Deploy application
+Update secrets
+Manage ConfigMaps
+but cannot delete namespaces or cluster-level resources.
 
 
 Docker
