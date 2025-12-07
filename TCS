@@ -1,6 +1,89 @@
 Linux Admin
-1.LvM
+*** LvM ***
+
+
 *** How to Copy and how to take backups ***
+✅ 1️⃣ cp (Copy)
+Used to copy files or folders from one place to another.
+Examples:
+cp file.txt /backup/
+cp -r folder/ /backup/
+👉 Best when you just want a quick duplicate.
+🛑 Not ideal for real backup because it doesn't compress or track changes.
+
+✅ 2️⃣ mv (Move / Rename)
+Used to move or rename files.
+Examples:
+mv file.txt /backup/
+mv oldname.txt newname.txt
+👉 Moves the file (removes from original location).
+🛑 Not used for backup because original file disappears.
+
+✅ 3️⃣ tar (Create Backup File)
+Used to create a single archive file (like .zip) containing many files.
+Examples:
+Create backup
+tar -czvf backup.tar.gz /etc
+| Option | Meaning                                      |
+| ------ | -------------------------------------------- |
+| `-c`   | Create a new archive                         |
+| `-z`   | Compress with gzip (makes the file smaller)  |
+| `-v`   | Verbose (shows progress on screen)           |
+| `-f`   | File name (backup.tar.gz is the output file) |
+
+Restore backup
+tar -xzvf backup.tar.gz
+| Option | Meaning                 |
+| ------ | ----------------------- |
+| `-x`   | Extract (unpack) files  |
+| `-z`   | Decompress gzip         |
+| `-v`   | Verbose (show progress) |
+| `-f`   | Use the specified file  |
+
+👉 Good for full backups because it compresses and keeps permissions.
+
+✅ 4️⃣ rsync (Best for Real Backups)
+Used to sync files from one location to another and only copy changes.
+Examples:
+This command is used to copy or sync files locally.
+rsync -av /data/ /backup/data/
+| Option | Meaning                                              |
+| ------ | ---------------------------------------------------- |
+| `-a`   | Archive mode (keeps permissions, timestamps, owners) |
+| `-v`   | Verbose (shows progress)                             |
+This command is used to copy or sync files locally.
+
+This command is used to copy or backup files to a remote server over SSH.
+rsync -avz /data/ user@server:/backup/
+| Option | Meaning                                             |
+| ------ | --------------------------------------------------- |
+| `-a`   | Archive mode (preserve permissions/structure)       |
+| `-v`   | Verbose                                             |
+| `-z`   | Compress data during transfer (faster over network) |
+
+👉Only changed files are copied — ideal for automation & daily backups.
+
+🔹 scp (Secure Copy)
+scp is used to copy files between local and remote servers securely using SSH.
+Example:
+scp file.txt user@server:/backup/
+👉 This copies file.txt from your machine to /backup/ on the remote server.
+
+Copy a folder using -r:
+scp -r /data/ user@server:/backup/
+👉 Copies the entire /data folder to the remote server
+
+*** Difference between rsync and scp ***
+scp
+Copies everything every time
+Copy files/folders once between local and remote securely (SSH).
+
+rsync
+Copies only changed files (incremental)
+Sync files/folders efficiently between local and remote, copying only changes.
+
+
+
 
 *** ping server is not reachable(what is the next step)***
 ✅ If ping is not reachable, next steps:
