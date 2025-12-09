@@ -464,6 +464,35 @@ VPA will recommend or auto adjust resources.
 (Not a single CLI command — requires CRDs enabled.)
 
 
+or
+ProgressDeadlineExceeded means Kubernetes tried to update or deploy your application (Deployment), but it did not make progress within the allowed time — so it stopped and marked the rollout as failed.
+
+In simple terms:
+Kubernetes waited for new pods to become ready, but they never did — so the deployment failed.
+🛠 How to check and fix:
+
+1️⃣ Check rollout status
+kubectl rollout status deployment <deployment-name>
+
+
+2️⃣ Check pod status
+kubectl get pods
+
+
+3️⃣ Describe a failing pod
+kubectl describe pod <pod-name>
+
+
+4️⃣ Check logs
+kubectl logs <pod-name>
+
+
+5️⃣ Fix the issue → then restart rollout
+kubectl rollout restart deployment <deployment-name>
+
+📝 Default timeout
+Kubernetes waits 600 seconds (10 minutes) by default before giving this error.
+
 *** Kubernetes architecture ***
 🧠 1️⃣ Control Plane (Master components)-decides where your application should run and monitors the health of the application
 These components manage and control the cluster.
@@ -707,5 +736,40 @@ Docker
 first check docker ps -a-status of container
 docker images
 docker rmi container <containerid>
+🔍 Step 1: Check stopped containers
+docker ps -a
+
+
+This shows all containers (running + stopped).
+
+Stopped containers will show status like:
+
+Exited (0) ...
+
+🗑️ Step 2: Remove the stopped container
+docker rm <container_id>
+
+
+Example:
+
+docker rm abc123
+
+🚀 Shortcut: Remove all stopped containers
+docker container prune -f
+
+❗ Important:
+
+You do not delete a container using docker rmi.
+docker rmi is for deleting images, not containers.
+
+Summary Table
+Command	Purpose
+docker ps -a	View stopped container
+docker rm <id>	Delete container
+docker container prune -f	Delete all stopped containers
+docker rmi <image>	Delete image
+✔ One-line clear answer:
+
+To delete a stopped container, first check it using docker ps -a, then use docker rm <container_id> to remove it.
 
 
